@@ -39,7 +39,8 @@ fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned 
 
 	LOG_INFO("fan.pwm", "Using pin=%u for PWM range %u...%u", pwm_pin, pwm_low, pwm_high);
 #	ifndef WITH_WIRINGPI_STUB
-	wiringPiSetupGpio();
+	// wiringPiSetupGpio();
+	wiringPiSetup();
 	if (pwm_soft) {
 		softPwmCreate(pwm_pin, 0, pwm_soft);
 	} else {
