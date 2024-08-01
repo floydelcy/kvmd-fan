@@ -22,6 +22,13 @@
 
 #include "fan.h"
 
+typedef struct {
+	unsigned int ccr;
+	unsigned int arr;
+	unsigned int div;
+} pwm_info;
+
+static pwm_info pwm_info_t;
 
 static void *_hall_thread(void *v_fan);
 
@@ -41,6 +48,9 @@ fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned 
 #	ifndef WITH_WIRINGPI_STUB
 	// wiringPiSetupGpio();
 	wiringPiSetup();
+	pwm_info_t.ccr = 0;
+	pwm_info_t.arr = 1024;
+	pwm_info_t.div = 4;
 	if (pwm_soft) {
 		softPwmCreate(pwm_pin, 0, pwm_soft);
 	} else {
@@ -157,6 +167,9 @@ unsigned fan_set_speed_percent(fan_s *fan, float speed) {
 	if (fan->pwm_soft) {
 		softPwmWrite(fan->pwm_pin, pwm / 1024.0 * fan->pwm_soft);
 	} else {
+		pwmSetClock(fan->pwm_pin, pwm_info_t.div);
+		pwmSetRange(fan->pwm_pin, pwm_info_t.arr);
+		// pwmToneWrite(fan->pwm_pin, 20000);
 		pwmWrite(fan->pwm_pin, pwm);
 	}
 #	endif
