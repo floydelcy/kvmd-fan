@@ -33,7 +33,7 @@ static pwm_info pwm_info_t;
 static void *_hall_thread(void *v_fan);
 
 
-fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned pwm_soft, int hall_pin, fan_bias_e hall_bias) {
+fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned pwm_soft, int hall_pin, int gpio_chip, fan_bias_e hall_bias) {
 	assert(pwm_low < pwm_high);
 	assert(pwm_high <= 1024);
 
@@ -48,9 +48,9 @@ fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned 
 #	ifndef WITH_WIRINGPI_STUB
 	// wiringPiSetupGpio();
 	wiringPiSetup();
-	pwm_info_t.ccr = 0;
-	pwm_info_t.arr = 1024;
-	pwm_info_t.div = 4;
+	pwm_info_t.ccr = pwm_low;
+	pwm_info_t.arr = pwm_high;
+	pwm_info_t.div = 2;
 	if (pwm_soft) {
 		softPwmCreate(pwm_pin, 0, pwm_soft);
 	} else {
@@ -61,11 +61,15 @@ fan_s *fan_init(unsigned pwm_pin, unsigned pwm_low, unsigned pwm_high, unsigned 
 	atomic_init(&fan->stop, true);
 	atomic_init(&fan->rpm, 0);
 	if (hall_pin >= 0) {
-		LOG_INFO("fan.hall", "Using pin=%d for the Hall sensor", hall_pin);
+		LOG_INFO("fan.hall", "Using gpiochip=%d pin=%d for the Hall sensor", gpio_chip, hall_pin);
 
 #		ifdef HAVE_GPIOD2
+
 		struct gpiod_chip *chip;
-		if ((chip = gpiod_chip_open("/dev/gpiochip0")) == NULL) {
+		char p[26] = "/dev/gpiochip";
+		char path[30];
+		sprintf(path, "%s%d", p, gpio_chip);
+		if ((chip = gpiod_chip_open(path)) == NULL) {
 			LOG_PERROR("fan.hall", "Can't open GPIO chip");
 			goto error;
 		}
@@ -157,9 +161,9 @@ void fan_destroy(fan_s *fan) {
 unsigned fan_set_speed_percent(fan_s *fan, float speed) {
 	unsigned pwm;
 	if (speed == 0) {
-		pwm = 0;
+		pwm = fan->pwm_low;
 	} else if (speed == 100) {
-		pwm = 1024;
+		pwm = fan->pwm_high;
 	} else {
 		pwm = roundf(remap(speed, 0, 100, fan->pwm_low, fan->pwm_high));
 	}
