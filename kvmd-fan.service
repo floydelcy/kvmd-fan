@@ -8,7 +8,6 @@ Restart=always
 RestartSec=3
 EnvironmentFile=-/etc/conf.d/kvmd-fan
 ExecStart=/usr/bin/kvmd-fan --config=?/etc/kvmd/fan.ini $KVMD_FAN_ARGS
-ExecStop=/usr/local/bin/disable_fan
 TimeoutStopSec=3
 
 [Install]

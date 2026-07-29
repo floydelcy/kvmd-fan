@@ -1,4 +1,2 @@
 #!/bin/bash
-echo 0 > /sys/class/pwm/pwmchip1/export
-echo 0 > /sys/class/pwm/pwmchip1/pwm0/enable
-echo 0 > /sys/class/pwm/pwmchip1/unexport
+/usr/bin/gpio pwm 21 0
