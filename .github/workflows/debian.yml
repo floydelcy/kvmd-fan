@@ -8,6 +8,9 @@ on:
         branches: [master, rv1126b]
     workflow_dispatch:
 
+permissions:
+    contents: write
+
 jobs:
     build:
         name: Build .deb (arm64)
@@ -79,18 +82,18 @@ jobs:
             with:
                 path: /tmp/artifacts
 
-          - name: Generate release notes
+          - name: Create Release and upload assets
             run: |
-                echo "## kvmd-fan ${{ github.ref_name }}" > /tmp/release.md
-                echo "" >> /tmp/release.md
-                echo "### Downloads" >> /tmp/release.md
+                NOTES="## kvmd-fan ${GITHUB_REF_NAME}"
+                NOTES="${NOTES}"$'\n'""
+                NOTES="${NOTES}"$'\n'"### Downloads"
                 for f in /tmp/artifacts/*/*.deb; do
-                    echo "- \`$(basename "$f")\`" >> /tmp/release.md
+                    NOTES="${NOTES}"$'\n'"- \`$(basename "$f")\`"
                 done
+                echo "$NOTES" > /tmp/release.md
 
-          - name: Create Release
-            uses: softprops/action-gh-release@v2
-            with:
-                body_path: /tmp/release.md
-                files: /tmp/artifacts/*/*.deb
-                generate_release_notes: false
+                gh release create "$GITHUB_REF_NAME" \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --title "$GITHUB_REF_NAME" \
+                    --notes-file /tmp/release.md \
+                    /tmp/artifacts/*/*.deb
