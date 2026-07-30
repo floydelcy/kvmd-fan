@@ -2,10 +2,10 @@ name: Debian Package
 
 on:
     push:
-        branches: [master]
+        branches: [master, rv1126b]
         tags: ["v*"]
     pull_request:
-        branches: [master]
+        branches: [master, rv1126b]
     workflow_dispatch:
 
 jobs:
