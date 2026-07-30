@@ -83,6 +83,8 @@ jobs:
                 path: /tmp/artifacts
 
           - name: Create Release and upload assets
+            env:
+                GH_TOKEN: ${{ github.token }}
             run: |
                 NOTES="## kvmd-fan ${GITHUB_REF_NAME}"
                 NOTES="${NOTES}"$'\n'""
