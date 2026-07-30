@@ -86,10 +86,13 @@ jobs:
             env:
                 GH_TOKEN: ${{ github.token }}
             run: |
+                echo "=== Artifacts structure ==="
+                find /tmp/artifacts -type f -name '*.deb' 2>/dev/null || echo "No .deb files found"
+
                 NOTES="## kvmd-fan ${GITHUB_REF_NAME}"
                 NOTES="${NOTES}"$'\n'""
                 NOTES="${NOTES}"$'\n'"### Downloads"
-                for f in /tmp/artifacts/*/*.deb; do
+                for f in $(find /tmp/artifacts -type f -name '*.deb'); do
                     NOTES="${NOTES}"$'\n'"- \`$(basename "$f")\`"
                 done
                 echo "$NOTES" > /tmp/release.md
@@ -98,4 +101,4 @@ jobs:
                     --repo "$GITHUB_REPOSITORY" \
                     --title "$GITHUB_REF_NAME" \
                     --notes-file /tmp/release.md \
-                    /tmp/artifacts/*/*.deb
+                    $(find /tmp/artifacts -type f -name '*.deb')
