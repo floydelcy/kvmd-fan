@@ -41,11 +41,14 @@ jobs:
             env:
                 GH_TOKEN: ${{ secrets.PRIVATE_REPO_PAT }}
             run: |
+                echo "=== List releases ==="
+                gh release list --repo "${{ vars.LIBGPIOD_REPO }}"
+                echo "=== Download latest ==="
                 gh release download \
                     --repo "${{ vars.LIBGPIOD_REPO }}" \
                     --pattern '*.deb' \
-                    --dir /tmp/debs
-                ls -la /tmp/debs/
+                    --dir /tmp/debs || true
+                ls -la /tmp/debs/ 2>/dev/null || echo "No files downloaded yet"
 
           - name: Install private Debian packages
             run: |
