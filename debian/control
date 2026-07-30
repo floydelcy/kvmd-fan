@@ -1,0 +1,25 @@
+Source: kvmd-fan
+Section: admin
+Priority: optional
+Maintainer: Maxim Devaev <mdevaev@gmail.com>
+Build-Depends: debhelper-compat (=13),
+               libiniparser-dev,
+               libmicrohttpd-dev,
+               libgpiod-dev (>= 2.1),
+               wiringpi-pikvm | wiringpi
+Standards-Version: 4.6.2
+Homepage: https://github.com/pikvm/kvmd-fan
+Rules-Requires-Root: no
+
+Package: kvmd-fan
+Architecture: armhf arm64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libiniparser1,
+         libmicrohttpd12,
+         libgpiod2 (>= 2.1),
+         wiringpi-pikvm | wiringpi
+Description: PiKVM - A small fan controller daemon
+ A small fan controller daemon for PiKVM.
+ It monitors temperature and controls a PWM fan
+ to keep the system cool.

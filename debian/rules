@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MAKE) CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+override_dh_auto_install:
+	$(MAKE) DESTDIR=$(CURDIR)/debian/kvmd-fan PREFIX=/usr install
+
+override_dh_install:
+	dh_install
+	# Install systemd service
+	install -d $(CURDIR)/debian/kvmd-fan/usr/lib/systemd/system
+	install -m 644 $(CURDIR)/kvmd-fan.service \
+		$(CURDIR)/debian/kvmd-fan/usr/lib/systemd/system/kvmd-fan.service
+	# Install fan.ini as example
+	install -d $(CURDIR)/debian/kvmd-fan/usr/share/doc/kvmd-fan/examples
+	install -m 644 $(CURDIR)/fan.ini \
+		$(CURDIR)/debian/kvmd-fan/usr/share/doc/kvmd-fan/examples/fan.ini
+	# Install disable_fan script
+	install -d $(CURDIR)/debian/kvmd-fan/usr/bin
+	install -m 755 $(CURDIR)/disable_fan \
+		$(CURDIR)/debian/kvmd-fan/usr/bin/disable_fan

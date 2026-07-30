@@ -1,0 +1,96 @@
+name: Debian Package
+
+on:
+    push:
+        branches: [master]
+        tags: ["v*"]
+    pull_request:
+        branches: [master]
+    workflow_dispatch:
+
+jobs:
+    build:
+        name: Build .deb (arm64)
+        runs-on: ubuntu-24.04-arm
+
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v5
+
+          - name: Install build dependencies
+            run: |
+                sudo apt-get update -qq
+                sudo apt-get install -y -qq --no-install-recommends \
+                    build-essential \
+                    debhelper-compat \
+                    devscripts \
+                    pkg-config \
+                    ca-certificates \
+                    libiniparser-dev \
+                    libmicrohttpd-dev
+
+          - name: Download wiringpi (public)
+            run: |
+                gh release download v2.58 \
+                    --repo floydelcy/wiringOP \
+                    --pattern '*.deb' \
+                    --dir /tmp/debs
+                ls -la /tmp/debs/
+
+          - name: Download libgpiod-dev (private)
+            env:
+                GH_TOKEN: ${{ secrets.PRIVATE_REPO_PAT }}
+            run: |
+                gh release download \
+                    --repo "${{ vars.LIBGPIOD_REPO }}" \
+                    --pattern '*.deb' \
+                    --dir /tmp/debs
+                ls -la /tmp/debs/
+
+          - name: Install private Debian packages
+            run: |
+                sudo dpkg -i /tmp/debs/*.deb || true
+                sudo apt-get install -f -y -qq
+
+          - name: Build .deb package
+            run: |
+                dpkg-buildpackage -b -us -uc -j$(nproc)
+                mkdir -p artifacts
+                cp ../*.deb artifacts/
+                cp ../*.ddeb artifacts/ 2>/dev/null || true
+                ls -la artifacts/
+
+          - name: Upload .deb artifacts
+            uses: actions/upload-artifact@v6
+            with:
+                name: kvmd-fan-arm64
+                path: artifacts/*.deb
+                if-no-files-found: error
+
+    release:
+        name: Create GitHub Release
+        needs: build
+        if: startsWith(github.ref, 'refs/tags/v')
+        runs-on: ubuntu-24.04-arm
+
+        steps:
+          - name: Download all artifacts
+            uses: actions/download-artifact@v6
+            with:
+                path: /tmp/artifacts
+
+          - name: Generate release notes
+            run: |
+                echo "## kvmd-fan ${{ github.ref_name }}" > /tmp/release.md
+                echo "" >> /tmp/release.md
+                echo "### Downloads" >> /tmp/release.md
+                for f in /tmp/artifacts/*/*.deb; do
+                    echo "- \`$(basename "$f")\`" >> /tmp/release.md
+                done
+
+          - name: Create Release
+            uses: softprops/action-gh-release@v2
+            with:
+                body_path: /tmp/release.md
+                files: /tmp/artifacts/*/*.deb
+                generate_release_notes: false
